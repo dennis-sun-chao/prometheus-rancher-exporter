@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,8 +25,8 @@ var (
 	accessKey     = os.Getenv("CATTLE_ACCESS_KEY")     // Optional - Access Key for Rancher API
 	secretKey     = os.Getenv("CATTLE_SECRET_KEY")     // Optional - Secret Key for Rancher API
 	log           = logrus.New()
-	logLevel      = getEnv("LOG_LEVEL", "info")                   // Optional - Set the logging level
-	hideSys, _    = strconv.ParseBool(getEnv("HIDE_SYS", "true")) // hideSys - Optional - Flag that indicates if the environment variable `HIDE_SYS` is set to a boolean true value
+	logLevel      = getEnv("LOG_LEVEL", "info")                    // Optional - Set the logging level
+	hideSys, _    = strconv.ParseBool(getEnv("HIDE_SYS", "false")) // hideSys - Optional - Flag that indicates if the environment variable `HIDE_SYS` is set to a boolean true value
 )
 
 // Predefined variables that are used throughout the exporter
@@ -59,6 +60,8 @@ func main() {
 	if rancherURL == "" {
 		log.Fatal("CATTLE_URL must be set and non-empty")
 	}
+
+	rancherURL := strings.Replace(rancherURL, "v1", "v2-beta", -1)
 
 	log.Info("Starting Prometheus Exporter for Rancher")
 	log.Info("Runtime Configuration in-use: URL of Rancher Server: ", rancherURL, " AccessKey: ", accessKey, "System Services hidden: ", hideSys)
