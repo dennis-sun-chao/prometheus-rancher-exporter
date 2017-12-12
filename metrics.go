@@ -17,13 +17,13 @@ func addMetrics() map[string]*prometheus.GaugeVec {
 			Namespace: "rancher",
 			Name:      "stack_health_status",
 			Help:      "HealthState of defined stack as reported by Rancher",
-		}, []string{"name", "health_state", "system"})
+		}, []string{"id", "name", "health_state", "system"})
 	gaugeVecs["stacksState"] = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "rancher",
 			Name:      "stack_state",
 			Help:      "State of defined stack as reported by Rancher",
-		}, []string{"name", "state", "system"})
+		}, []string{"id", "name", "state", "system"})
 
 	// Service Metrics
 	gaugeVecs["servicesScale"] = prometheus.NewGaugeVec(
@@ -37,13 +37,13 @@ func addMetrics() map[string]*prometheus.GaugeVec {
 			Namespace: "rancher",
 			Name:      "service_health_status",
 			Help:      "HealthState of the service, as reported by the Rancher API. Either (1) or (0)",
-		}, []string{"name", "stack_name", "health_state"})
+		}, []string{"id", "stack_id", "name", "stack_name", "health_state"})
 	gaugeVecs["servicesState"] = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "rancher",
 			Name:      "service_state",
 			Help:      "State of the service, as reported by the Rancher API",
-		}, []string{"name", "stack_name", "state"})
+		}, []string{"id", "stack_id", "name", "stack_name", "state"})
 
 	// Host Metrics
 	gaugeVecs["hostsState"] = prometheus.NewGaugeVec(
@@ -51,13 +51,13 @@ func addMetrics() map[string]*prometheus.GaugeVec {
 			Namespace: "rancher",
 			Name:      ("host_state"),
 			Help:      "State of defined host as reported by the Rancher API",
-		}, []string{"name", "state"})
+		}, []string{"id", "name", "state"})
 	gaugeVecs["hostAgentsState"] = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "rancher",
 			Name:      ("host_agent_state"),
 			Help:      "State of defined host agent as reported by the Rancher API",
-		}, []string{"name", "state"})
+		}, []string{"id", "name", "state"})
 
 	return gaugeVecs
 }
@@ -82,23 +82,23 @@ func checkMetric(endpoint string, baseType string) bool {
 }
 
 // setServiceMetrics - Logic to set the state of a system as a gauge metric
-func (e *Exporter) setServiceMetrics(name string, stack string, state string, health string, scale int) error {
+func (e *Exporter) setServiceMetrics(id, name string, stackID, stack string, state string, health string, scale int) error {
 
 	e.gaugeVecs["servicesScale"].With(prometheus.Labels{"name": name, "stack_name": stack}).Set(float64(scale))
 
 	for _, y := range healthStates {
 		if health == y {
-			e.gaugeVecs["servicesHealth"].With(prometheus.Labels{"name": name, "stack_name": stack, "health_state": y}).Set(1)
+			e.gaugeVecs["servicesHealth"].With(prometheus.Labels{"id": id, "stack_id": stackID, "name": name, "stack_name": stack, "health_state": y}).Set(1)
 		} else {
-			e.gaugeVecs["servicesHealth"].With(prometheus.Labels{"name": name, "stack_name": stack, "health_state": y}).Set(0)
+			e.gaugeVecs["servicesHealth"].With(prometheus.Labels{"id": id, "stack_id": stackID, "name": name, "stack_name": stack, "health_state": y}).Set(0)
 		}
 	}
 
 	for _, y := range serviceStates {
 		if state == y {
-			e.gaugeVecs["servicesState"].With(prometheus.Labels{"name": name, "stack_name": stack, "state": y}).Set(1)
+			e.gaugeVecs["servicesState"].With(prometheus.Labels{"id": id, "stack_id": stackID, "name": name, "stack_name": stack, "state": y}).Set(1)
 		} else {
-			e.gaugeVecs["servicesState"].With(prometheus.Labels{"name": name, "stack_name": stack, "state": y}).Set(0)
+			e.gaugeVecs["servicesState"].With(prometheus.Labels{"id": id, "stack_id": stackID, "name": name, "stack_name": stack, "state": y}).Set(0)
 		}
 
 	}
@@ -107,19 +107,19 @@ func (e *Exporter) setServiceMetrics(name string, stack string, state string, he
 }
 
 // setStackMetrics - Logic to set the state of a system as a gauge metric
-func (e *Exporter) setStackMetrics(name string, state string, health string, system string) error {
+func (e *Exporter) setStackMetrics(id, name string, state string, health string, system string) error {
 	for _, y := range healthStates {
 		if health == y {
-			e.gaugeVecs["stacksHealth"].With(prometheus.Labels{"name": name, "health_state": y, "system": system}).Set(1)
+			e.gaugeVecs["stacksHealth"].With(prometheus.Labels{"id": id, "name": name, "health_state": y, "system": system}).Set(1)
 		} else {
-			e.gaugeVecs["stacksHealth"].With(prometheus.Labels{"name": name, "health_state": y, "system": system}).Set(0)
+			e.gaugeVecs["stacksHealth"].With(prometheus.Labels{"id": id, "name": name, "health_state": y, "system": system}).Set(0)
 		}
 	}
 	for _, y := range stackStates {
 		if state == y {
-			e.gaugeVecs["stacksState"].With(prometheus.Labels{"name": name, "state": y, "system": system}).Set(1)
+			e.gaugeVecs["stacksState"].With(prometheus.Labels{"id": id, "name": name, "state": y, "system": system}).Set(1)
 		} else {
-			e.gaugeVecs["stacksState"].With(prometheus.Labels{"name": name, "state": y, "system": system}).Set(0)
+			e.gaugeVecs["stacksState"].With(prometheus.Labels{"id": id, "name": name, "state": y, "system": system}).Set(0)
 		}
 
 	}
@@ -127,21 +127,21 @@ func (e *Exporter) setStackMetrics(name string, state string, health string, sys
 }
 
 // setHostMetrics - Logic to set the state of a system as a gauge metric
-func (e *Exporter) setHostMetrics(name string, state, agentState string) error {
+func (e *Exporter) setHostMetrics(id, name string, state, agentState string) error {
 
 	for _, y := range hostStates {
 		if state == y {
-			e.gaugeVecs["hostsState"].With(prometheus.Labels{"name": name, "state": y}).Set(1)
+			e.gaugeVecs["hostsState"].With(prometheus.Labels{"id": id, "name": name, "state": y}).Set(1)
 		} else {
-			e.gaugeVecs["hostsState"].With(prometheus.Labels{"name": name, "state": y}).Set(0)
+			e.gaugeVecs["hostsState"].With(prometheus.Labels{"id": id, "name": name, "state": y}).Set(0)
 		}
 
 	}
 	for _, y := range agentStates {
 		if agentState == y {
-			e.gaugeVecs["hostAgentsState"].With(prometheus.Labels{"name": name, "state": y}).Set(1)
+			e.gaugeVecs["hostAgentsState"].With(prometheus.Labels{"id": id, "name": name, "state": y}).Set(1)
 		} else {
-			e.gaugeVecs["hostAgentsState"].With(prometheus.Labels{"name": name, "state": y}).Set(0)
+			e.gaugeVecs["hostAgentsState"].With(prometheus.Labels{"id": id, "name": name, "state": y}).Set(0)
 		}
 
 	}
