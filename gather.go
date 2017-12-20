@@ -33,7 +33,7 @@ type Data struct {
 func (e *Exporter) processMetrics(data *Data, endpoint string, hideSys bool, ch chan<- prometheus.Metric) error {
 
 	// Used for backwards compatibility
-	apiVer := getAPIVersion(rancherURL)
+	apiVer := getAPIVersion(e.rancherURL)
 
 	// Metrics - range through the data object
 	for _, x := range data.Data {
